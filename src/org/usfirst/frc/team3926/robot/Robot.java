@@ -24,10 +24,10 @@ public class Robot extends IterativeRobot {
     double leftInput;
     Joystick rightStick;
     double rightInput;
-    
+    boolean quadraticCheck = false;
     int session;
     Image frame;
-    CameraServer server;
+   //  CameraServer server;
    
     public void robotInit() {
        talon_FL = new Talon(0);
@@ -37,7 +37,7 @@ public class Robot extends IterativeRobot {
        driveSystem = new RobotDrive(talon_FL, talon_BL, talon_FR, talon_BR);
        leftStick = new Joystick(0);
        rightStick = new Joystick(1);
-    
+
        session = NIVision.IMAQdxOpenCamera("cam0", NIVision.IMAQdxCameraControlMode.CameraControlModeController);
        NIVision.IMAQdxConfigureGrab(session);
        frame = NIVision.imaqCreateImage(NIVision.ImageType.IMAGE_RGB, 0);
@@ -50,8 +50,19 @@ public class Robot extends IterativeRobot {
     	 if (rightStick.getRawButton(1)){
     	 	leftInput = rightInput;
     	 }
-    	 	
+
+        if(rightStick.getRawButton(2) && !rightStick.getRawButton(1)) quadraticCheck = true;
+        else if(leftStick.getRawButton(2)) quadraticCheck = false;
+
+        if (quadraticCheck){
+            leftInput = leftInput * leftInput;
+            rightInput = rightInput * rightInput;
+        }
+
     	driveSystem.tankDrive(leftInput, rightInput);
+
+
+
     	
     	//NIVision.Rect rect = new NIVision.Rect(200, 250, 100, 100);
 
@@ -63,7 +74,7 @@ public class Robot extends IterativeRobot {
     }
     
     
-    public void cameraThing() { //We see things with this
+   /* public void cameraThing() { //We see things with this
     	NIVision.Rect rect = new NIVision.Rect(200, 250, 100, 100);
 
         NIVision.IMAQdxGrab(session, frame, 1);
@@ -72,6 +83,6 @@ public class Robot extends IterativeRobot {
         CameraServer.getInstance().setImage(frame);
         Timer.delay(0.005);
     } 
- 
+ */
   
 }
