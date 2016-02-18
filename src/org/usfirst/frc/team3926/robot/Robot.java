@@ -25,12 +25,15 @@ public class Robot extends IterativeRobot {
     double leftInput;
     Joystick rightStick;
     double rightInput;
-    boolean quadraticCheck = false;
-    boolean arcadeDriveCheck = false;
-    boolean safeMode = false;
-    boolean roundingMode = false;
     int session;
     Image frame;
+    int bounceTimer = 0;
+    boolean bounceCheck = false;
+    boolean safeModeBounce = false;
+    boolean quadraticModeBounce = false;
+    boolean roundingModeBounce = false;
+    boolean arcadeModeBounce = false;
+    boolean arcadeDriveCheck = false;
     
    //  CameraServer server;
    
@@ -54,45 +57,73 @@ public class Robot extends IterativeRobot {
        frame = NIVision.imaqCreateImage(NIVision.ImageType.IMAGE_RGB, 0);
     }
    
+    
+    
     @SuppressWarnings("deprecation")
 	public void teleopPeriodic() {
+    	int fakeDebounce = 0;
+    	boolean fakeDebounceCheck = false;
+    	
+    	
+    	
         driveSystem.setSafetyEnabled(false);
         rightInput = rightStick.getY();
         leftInput = leftStick.getY();
 
-        if (debounce(leftStick.getRawButton(6))) arcadeDriveCheck = true;
-            else if (debounce(leftStick.getRawButton(6) && arcadeDriveCheck == true)) arcadeDriveCheck = false;
+       /* if (debounce(leftStick.getRawButton(6))) arcadeDriveCheck = true;
+            else if (debounce(leftStick.getRawButton(6)) && arcadeDriveCheck == true) {
+            	arcadeDriveCheck = false;
+            	
+            }
 
-        if(debounce(leftStick.getRawButton(3))) roundingMode = true;
-            else if (debounce(leftStick.getRawButton(3)) && roundingMode == true) roundingMode = false;
-
-        if (debounce(rightStick.getRawButton(6))) safeMode = true;
-            else if (debounce(rightStick.getRawButton(6)) && safeMode == true) safeMode = false;
-
-        if(debounce(rightStick.getRawButton(2))) quadraticCheck = true;
-            else if(debounce(leftStick.getRawButton(2)) && quadraticCheck == true) quadraticCheck = false;
-
+     
         if (debounce(rightStick.getRawButton(1))) {
             leftInput = rightInput;
         }
-
-        if (safeMode) {
+*/
+        if (safeModeBounce) {
              leftInput /= 2;
              rightInput /= 2;
+        } else if (debounce(rightStick.getRawButton(1))) {
+        	if (safeModeBounce) {
+        		safeModeBounce = false;
+        	} else {
+        		safeModeBounce = true;
+        	}
         }
 
-        if (quadraticCheck) { //Instead of linear acceleration, this changes it to quadratic (starts slow and gets faster)
+        if (quadraticModeBounce) { //Instead of linear acceleration, this changes it to quadratic (starts slow and gets faster)
              leftInput = (leftInput * Math.abs(leftInput));
              rightInput = (rightInput * Math.abs(rightInput));
+        } else if (debounce(rightStick.getRawButton(2))){
+        	if (quadraticModeBounce){
+        		quadraticModeBounce = false;
+        	} else {
+        		quadraticModeBounce = true;	
+        	}
         }
-
-    SmartDashboard.putBoolean("Safe Mode: ", safeMode);
-    SmartDashboard.putBoolean("quadratic", quadraticCheck);
-    SmartDashboard.putDouble("leftInput", leftInput);
-    SmartDashboard.putDouble("rightInput", rightInput);
-
+        
+        if (roundingModeBounce){
+        	//TODO write code 
+        } else if (debounce(leftStick.getRawButton(3))) {
+        	if (roundingModeBounce){
+        		roundingModeBounce = false;
+        	} else {
+        		roundingModeBounce = true;
+        	}
+        }
+        if (arcadeModeBounce){
+        	arcadeDriveCheck = true;
+        } else if (debounce(leftStick.getRawButton(6))) {
+        	if (arcadeModeBounce) {
+        		arcadeModeBounce = false;
+        	} else {
+        		arcadeModeBounce = true;
+        	}
+        }
+        
     leftInput *= 1.2;
-
+ 
     if (arcadeDriveCheck){
     driveSystem.arcadeDrive(leftStick.getY(), rightStick.getZ());
     } else if (!arcadeDriveCheck) driveSystem.tankDrive(leftInput, rightInput);
@@ -118,17 +149,19 @@ public class Robot extends IterativeRobot {
  */
 
     public boolean debounce(boolean buttonPress) {
-        int bounceTimer = 0;
-        boolean bounceCheck = false;
-
+        
         if (buttonPress) {
             ++bounceTimer;
-            if (bounceTimer >= 20) bounceCheck = true;
-            else bounceCheck = false;
-        } else bounceCheck = false;
+            if (bounceTimer >= 20) {
+            	bounceCheck = true;
+            } else {
+            	bounceCheck = false;
+            }
+        } else {
+        	bounceCheck = false;
+        }
 
-        return bounceCheck;
-
+        return bounceCheck;  
     }
 
 
