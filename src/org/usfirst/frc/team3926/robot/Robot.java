@@ -28,6 +28,7 @@ public class Robot extends IterativeRobot {
     boolean quadraticCheck = false;
     boolean arcadeDriveCheck = false;
     boolean safeMode = false;
+    boolean roundingMode = false;
     int session;
     Image frame;
     
@@ -42,65 +43,66 @@ public class Robot extends IterativeRobot {
        leftStick = new Joystick(0);
        rightStick = new Joystick(1);
 
+       driveSystem.setInvertedMotor(RobotDrive.MotorType.kFrontLeft, true);
+       driveSystem.setInvertedMotor(RobotDrive.MotorType.kFrontRight, true);
+       driveSystem.setInvertedMotor(RobotDrive.MotorType.kRearLeft, true);
+       driveSystem.setInvertedMotor(RobotDrive.MotorType.kRearRight, true);
+
+
        session = NIVision.IMAQdxOpenCamera("cam0", NIVision.IMAQdxCameraControlMode.CameraControlModeController);
        NIVision.IMAQdxConfigureGrab(session);
        frame = NIVision.imaqCreateImage(NIVision.ImageType.IMAGE_RGB, 0);
     }
    
     @SuppressWarnings("deprecation")
-	public void teleopPeriodic() { 
-    	driveSystem.setInvertedMotor(RobotDrive.MotorType.kFrontLeft, true);
-    	driveSystem.setInvertedMotor(RobotDrive.MotorType.kFrontRight, true);
-    	driveSystem.setInvertedMotor(RobotDrive.MotorType.kRearLeft, true);
-    	driveSystem.setInvertedMotor(RobotDrive.MotorType.kRearRight, true);
-    leftInput = leftStick.getY(); 
-    if (leftStick.getRawButton(6)) arcadeDriveCheck = true;
-    else if (leftStick.getRawButton(4)) arcadeDriveCheck = false;
-    
-    
-    	rightInput = rightStick.getY();
-    	/*
-    	 if (rightStick.getRawButton(1)){
-    	 	leftInput = rightInput;
-    	 }
-    	 
-    	 if (rightStick.getRawButton(6)) safeMode = true;
-    	 else if (rightStick.getRawButton(4)) safeMode = false;
-    	 
-    	 if (safeMode){
-    		 leftInput /= 2;
-    		 rightInput /= 2; 
-    	 }
-    	 
-    	 SmartDashboard.putBoolean("Safe Mode: ", safeMode);
-         if(rightStick.getRawButton(2)) quadraticCheck = true;
-        else if(leftStick.getRawButton(2)) quadraticCheck = false;
+	public void teleopPeriodic() {
+        driveSystem.setSafetyEnabled(false);
+        rightInput = rightStick.getY();
+        leftInput = leftStick.getY();
 
-       if (quadraticCheck){ //Instead of linear acceleration, this changes it to quadratic (starts slow and gets faster)
-            leftInput = (leftInput * Math.abs(leftInput));
-            rightInput = (rightInput * Math.abs(rightInput));
-          
-            //TODO ask Kluge about quadratic and his opinion 
+        if (debounce(leftStick.getRawButton(6))) arcadeDriveCheck = true;
+            else if (debounce(leftStick.getRawButton(6) && arcadeDriveCheck == true)) arcadeDriveCheck = false;
+
+        if(debounce(leftStick.getRawButton(3))) roundingMode = true;
+            else if (debounce(leftStick.getRawButton(3)) && roundingMode == true) roundingMode = false;
+
+        if (debounce(rightStick.getRawButton(6))) safeMode = true;
+            else if (debounce(rightStick.getRawButton(6)) && safeMode == true) safeMode = false;
+
+        if(debounce(rightStick.getRawButton(2))) quadraticCheck = true;
+            else if(debounce(leftStick.getRawButton(2)) && quadraticCheck == true) quadraticCheck = false;
+
+        if (debounce(rightStick.getRawButton(1))) {
+            leftInput = rightInput;
         }
-        SmartDashboard.putBoolean("quadratic", quadraticCheck);
-        SmartDashboard.putDouble("leftInput", leftInput);
-        SmartDashboard.putDouble("rightInput", rightInput);
-       
-    	
-    	
-    	leftInput *= 1.1;
-    	*/
-    	if (arcadeDriveCheck){
-    
-    	driveSystem.arcadeDrive(leftStick.getY(), rightStick.getZ());
-    	}
-    	else if (!arcadeDriveCheck) driveSystem.tankDrive(leftInput, rightInput);
-    	//NIVision.Rect rect = new NIVision.Rect(200, 250, 100, 100);
 
-        NIVision.IMAQdxGrab(session, frame, 1);
-        //NIVision.imaqDrawShapeOnImage(frame, frame, rect, DrawMode.DRAW_VALUE, ShapeMode.SHAPE_OVAL, 0.0f);
-        CameraServer.getInstance().setImage(frame);
-        Timer.delay(0.005);
+        if (safeMode) {
+             leftInput /= 2;
+             rightInput /= 2;
+        }
+
+        if (quadraticCheck) { //Instead of linear acceleration, this changes it to quadratic (starts slow and gets faster)
+             leftInput = (leftInput * Math.abs(leftInput));
+             rightInput = (rightInput * Math.abs(rightInput));
+        }
+
+    SmartDashboard.putBoolean("Safe Mode: ", safeMode);
+    SmartDashboard.putBoolean("quadratic", quadraticCheck);
+    SmartDashboard.putDouble("leftInput", leftInput);
+    SmartDashboard.putDouble("rightInput", rightInput);
+
+    leftInput *= 1.2;
+
+    if (arcadeDriveCheck){
+    driveSystem.arcadeDrive(leftStick.getY(), rightStick.getZ());
+    } else if (!arcadeDriveCheck) driveSystem.tankDrive(leftInput, rightInput);
+
+    NIVision.Rect rect = new NIVision.Rect(200, 250, 100, 100);
+
+    NIVision.IMAQdxGrab(session, frame, 1);
+    //NIVision.imaqDrawShapeOnImage(frame, frame, rect, DrawMode.DRAW_VALUE, ShapeMode.SHAPE_OVAL, 0.0f);
+    CameraServer.getInstance().setImage(frame);
+    Timer.delay(0.005);
     }
     
     
@@ -114,5 +116,20 @@ public class Robot extends IterativeRobot {
         Timer.delay(0.005);
     } 
  */
-  
+
+    public boolean debounce(boolean buttonPress) {
+        int bounceTimer = 0;
+        boolean bounceCheck = false;
+
+        if (buttonPress) {
+            ++bounceTimer;
+            if (bounceTimer >= 20) bounceCheck = true;
+            else bounceCheck = false;
+        } else bounceCheck = false;
+
+        return bounceCheck;
+
+    }
+
+
 }
