@@ -61,66 +61,60 @@ public class Robot extends IterativeRobot {
     
     @SuppressWarnings("deprecation")
 	public void teleopPeriodic() {
-    	int fakeDebounce = 0;
-    	boolean fakeDebounceCheck = false;
-    	
-    	
-    	
         driveSystem.setSafetyEnabled(false);
         rightInput = rightStick.getY();
         leftInput = leftStick.getY();
 
-       /* if (debounce(leftStick.getRawButton(6))) arcadeDriveCheck = true;
-            else if (debounce(leftStick.getRawButton(6)) && arcadeDriveCheck == true) {
-            	arcadeDriveCheck = false;
-            	
-            }
-
-     
         if (debounce(rightStick.getRawButton(1))) {
-            leftInput = rightInput;
+            if (safeModeBounce) {
+                safeModeBounce = false;
+            } else {
+                safeModeBounce = true;
+            }
         }
-*/
         if (safeModeBounce) {
-             leftInput /= 2;
-             rightInput /= 2;
-        } else if (debounce(rightStick.getRawButton(1))) {
-        	if (safeModeBounce) {
-        		safeModeBounce = false;
-        	} else {
-        		safeModeBounce = true;
-        	}
+            leftInput /= 2;
+            rightInput /= 2;
+        }
+        if (debounce(rightStick.getRawButton(2))){
+            if (quadraticModeBounce){
+                quadraticModeBounce = false;
+            } else {
+                quadraticModeBounce = true;
+            }
+        }
+        if (quadraticModeBounce) { //Instead of linear acceleration, this changes it to quadratic (starts slow and gets faster)
+            leftInput = (leftInput * Math.abs(leftInput));
+            rightInput = (rightInput * Math.abs(rightInput));
         }
 
-        if (quadraticModeBounce) { //Instead of linear acceleration, this changes it to quadratic (starts slow and gets faster)
-             leftInput = (leftInput * Math.abs(leftInput));
-             rightInput = (rightInput * Math.abs(rightInput));
-        } else if (debounce(rightStick.getRawButton(2))){
-        	if (quadraticModeBounce){
-        		quadraticModeBounce = false;
-        	} else {
-        		quadraticModeBounce = true;	
-        	}
+
+        if (debounce(leftStick.getRawButton(3))) {
+            if (roundingModeBounce){
+                roundingModeBounce = false;
+            } else {
+                roundingModeBounce = true;
+            }
         }
-        
         if (roundingModeBounce){
-        	//TODO write code 
-        } else if (debounce(leftStick.getRawButton(3))) {
-        	if (roundingModeBounce){
-        		roundingModeBounce = false;
-        	} else {
-        		roundingModeBounce = true;
-        	}
+        }
+
+
+        if (debounce(leftStick.getRawButton(6))) {
+            if (arcadeModeBounce) {
+                arcadeModeBounce = false;
+                driveSystem.tankDrive(leftInput, rightInput);
+            } else {
+                arcadeModeBounce = true;
+            }
         }
         if (arcadeModeBounce){
-        	arcadeDriveCheck = true;
-        } else if (debounce(leftStick.getRawButton(6))) {
-        	if (arcadeModeBounce) {
-        		arcadeModeBounce = false;
-        	} else {
-        		arcadeModeBounce = true;
-        	}
+            driveSystem.arcadeDrive(leftStick.getY(), rightStick.getZ());
         }
+
+
+
+
         
     leftInput *= 1.2;
  
