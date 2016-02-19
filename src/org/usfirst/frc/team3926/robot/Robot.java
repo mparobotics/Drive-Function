@@ -12,8 +12,9 @@ import com.ni.vision.NIVision.ShapeMode;
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.*;
-
-
+import java.util.HashMap;
+import java.util.AbstractMap;
+import java.util.Map;
 
 public class Robot extends IterativeRobot {
 	Talon talon_FL;
@@ -55,48 +56,46 @@ public class Robot extends IterativeRobot {
        session = NIVision.IMAQdxOpenCamera("cam0", NIVision.IMAQdxCameraControlMode.CameraControlModeController);
        NIVision.IMAQdxConfigureGrab(session);
        frame = NIVision.imaqCreateImage(NIVision.ImageType.IMAGE_RGB, 0);
+
+
+
     }
    
     
     
     @SuppressWarnings("deprecation")
 	public void teleopPeriodic() {
+
+
+
         driveSystem.setSafetyEnabled(false);
         rightInput = rightStick.getY();
         leftInput = leftStick.getY();
 
         if (debounce(rightStick.getRawButton(1))) {
-            if (safeModeBounce) {
-                safeModeBounce = false;
-            } else {
-                safeModeBounce = true;
-            }
+            safeModeBounce = !safeModeBounce;
         }
+        if (debounce(rightStick.getRawButton(2))){
+            quadraticModeBounce = !quadraticModeBounce;
+        }
+        if (debounce(leftStick.getRawButton(3))) {
+            roundingModeBounce = !roundingModeBounce;
+        }
+
+
         if (safeModeBounce) {
             leftInput /= 2;
             rightInput /= 2;
         }
-        if (debounce(rightStick.getRawButton(2))){
-            if (quadraticModeBounce){
-                quadraticModeBounce = false;
-            } else {
-                quadraticModeBounce = true;
-            }
-        }
+
         if (quadraticModeBounce) { //Instead of linear acceleration, this changes it to quadratic (starts slow and gets faster)
             leftInput = (leftInput * Math.abs(leftInput));
             rightInput = (rightInput * Math.abs(rightInput));
         }
 
 
-        if (debounce(leftStick.getRawButton(3))) {
-            if (roundingModeBounce){
-                roundingModeBounce = false;
-            } else {
-                roundingModeBounce = true;
-            }
-        }
         if (roundingModeBounce){
+            //TODO write code for this
         }
 
 
@@ -129,8 +128,8 @@ public class Robot extends IterativeRobot {
     CameraServer.getInstance().setImage(frame);
     Timer.delay(0.005);
     }
-    
-    
+
+
    /* public void cameraThing() { //We see things with this
     	NIVision.Rect rect = new NIVision.Rect(200, 250, 100, 100);
 
